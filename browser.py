@@ -69,6 +69,16 @@ class URL:
         s.close()
         return content
 
+    def request_file(self):
+        p1, p2 = self.path.split('/',1)
+        print(f"self.host: {p2}")
+        try:
+            with open(p2, 'r') as file:
+                print(f"file: {file}")
+                return file.read()
+        except FileNotFoundError:
+            print(f"Error: File {self} not found.")
+
     def request(self):        
         match self.scheme:
             case "http": 
@@ -76,14 +86,7 @@ class URL:
             case "https": 
                 return self.request_http()
             case "file": 
-                p1, p2 = self.path.split('/',1)
-                print(f"self.host: {p2}")
-                try:
-                    with open(p2, 'r') as file:
-                        print(f"file: {file}")
-                        return file.read()
-                except FileNotFoundError:
-                    print(f"Error: File {self} not found.")
+                return self.request_file()
             case "data": return 
             case "view-source": return 
         

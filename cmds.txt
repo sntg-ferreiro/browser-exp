@@ -1,0 +1,10 @@
+python3 browser.py http://example.org/
+python3 browser.py http://browser.engineering/http.html
+python3 browser.py https://browser.engineering/http.html
+python3 browser.py https://browser.engineering/examples/example1-simple.html
+
+./browser.py https://browser.engineering/examples/example1-simple.html
+./browser.py http://browser.engineering/examples/example1-simple.html
+./browser.py file:///G:/browser-eng/python/cmds.txt
+
+// This is a file to test!

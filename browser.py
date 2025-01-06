@@ -10,13 +10,6 @@ def createRequest(host, path, method="GET", httpVersion="HTTP/1.1", userAgent="Z
         request += "\r\n"
         return request
 
-def makeFileFromUrl(host, path, socket):
-    request = createRequest(host, path)
-    print("Sending request... ")
-    print(request)
-    socket.send(request.encode("utf8"))
-    return  socket.makefile("r", encoding="utf8", newline="\r\n")
-
 def makeFileFromUrlTLS(host, path, socket):
     ctx = ssl.create_default_context()
     socket = ctx.wrap_socket(socket, server_hostname=host)
@@ -45,39 +38,21 @@ class URL:
             self.port = int(port)
         self.path = "/" + url
         
-
-    def request(self):
-        #response = []
-        
-        match self.scheme:
-            case "http": 
-                s = socket.socket(
-                    family=socket.AF_INET,
-                    type=socket.SOCK_STREAM,
-                    proto=socket.IPPROTO_TCP,
-                )
-                s.connect((self.host, self.port))
-                response = makeFileFromUrl(self.host, self.path, s)
-            case "https": 
-                s = socket.socket(
-                    family=socket.AF_INET,
-                    type=socket.SOCK_STREAM,
-                    proto=socket.IPPROTO_TCP,
-                )
-                s.connect((self.host, self.port))
-                response = makeFileFromUrlTLS(self.host, self.path, s)
-            case "file": 
-                p1, p2 = self.path.split('/',1)
-                print(f"self.host: {p2}")
-                try:
-                    with open(p2, 'r') as file:
-                        print(f"file: {file}")
-                        return file.read()
-                except FileNotFoundError:
-                    print(f"Error: File {self} not found.")
-            case "data": return 
-            case "view-source": return 
-            
+    def request_http(self):
+        s = socket.socket(
+            family=socket.AF_INET,
+            type=socket.SOCK_STREAM,
+            proto=socket.IPPROTO_TCP,
+        )
+        s.connect((self.host, self.port))
+        if self.scheme == "https":
+                ctx = ssl.create_default_context()
+                s = ctx.wrap_socket(s, server_hostname=self.host)
+        request = createRequest(self.host, self.path)
+        print("Sending request... ")
+        print(request)
+        s.send(request.encode("utf8"))
+        response = s.makefile("r", encoding="utf8", newline="\r\n")
         statusline = response.readline()
         version, status, explanation = statusline.split(" ", 2)
         print("Reciving response... ")
@@ -90,10 +65,27 @@ class URL:
             response_headers[header.casefold()] = value.strip()
         assert "transfer-encoding" not in response_headers
         assert "content-encoding" not in response_headers
-        #print(f"Headers: {response_headers}")
         content = response.read()
         s.close()
         return content
+
+    def request(self):        
+        match self.scheme:
+            case "http": 
+                return self.request_http()
+            case "https": 
+                return self.request_http()
+            case "file": 
+                p1, p2 = self.path.split('/',1)
+                print(f"self.host: {p2}")
+                try:
+                    with open(p2, 'r') as file:
+                        print(f"file: {file}")
+                        return file.read()
+                except FileNotFoundError:
+                    print(f"Error: File {self} not found.")
+            case "data": return 
+            case "view-source": return 
         
 def show(body):
     in_tag = False

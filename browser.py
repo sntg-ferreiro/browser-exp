@@ -24,19 +24,24 @@ class URL:
         if not url:
             url = "file:///G:/browser-eng/python/cmds.txt"
             self.port = 80
-        self.scheme, url = url.split("://", 1)
-        assert self.scheme in ["http", "https", "file"]
-        if self.scheme == "http":
-            self.port = 80
-        elif self.scheme == "https":
-            self.port = 443
-        if not "/" in url:
-            url = url + "/"
-        self.host , url = url.split("/", 1)
-        if ":" in self.host:
-            self.host, port = self.host.split(":", 1)
-            self.port = int(port)
-        self.path = "/" + url
+        if "data:" in url and "://" not in url: 
+            self.scheme, url = url.split(",", 1)
+            assert self.scheme == "data:text/html"
+            self.content = url
+        else:
+            self.scheme, url = url.split("://", 1)
+            assert self.scheme in ["http", "https", "file"]
+            if self.scheme == "http":
+                self.port = 80
+            elif self.scheme == "https":
+                self.port = 443
+            if not "/" in url:
+                url = url + "/"
+            self.host , url = url.split("/", 1)
+            if ":" in self.host:
+                self.host, port = self.host.split(":", 1)
+                self.port = int(port)
+            self.path = "/" + url
         
     def request_http(self):
         s = socket.socket(
@@ -71,7 +76,6 @@ class URL:
 
     def request_file(self):
         p1, p2 = self.path.split('/',1)
-        print(f"self.host: {p2}")
         try:
             with open(p2, 'r') as file:
                 print(f"file: {file}")
@@ -81,23 +85,39 @@ class URL:
 
     def request(self):        
         match self.scheme:
-            case "http": 
-                return self.request_http()
-            case "https": 
+            case "http" | "https": 
                 return self.request_http()
             case "file": 
                 return self.request_file()
-            case "data": return 
-            case "view-source": return 
+            case "data:text/html": 
+                return self.content 
+            case "view-source": 
+                return 
+            case _:
+                print(f"Error on parsing schema")
         
 def show(body):
     in_tag = False
+    in_entity = False
+    entity = ''
     for c in body:
         if c == "<":
             in_tag = True
         elif c == ">":
             in_tag = False
-        elif not in_tag:
+        elif c == "&":
+            entity += c
+            in_entity = True
+        elif in_entity and not c == ';':
+            entity += c
+        elif c == ";":
+            if entity == "&gt":
+                print('>', end="")
+            elif entity == "&lt":
+                print('<', end="")
+            entity = ''
+            in_entity = False
+        elif not in_tag | in_entity:
             print(c, end="")
 
 def load(url):

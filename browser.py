@@ -110,7 +110,7 @@ def show(body):
             in_entity = True
         elif in_entity and not c == ';':
             entity += c
-        elif c == ";":
+        elif c == ";" and not entity == '':
             parseEntity(entity)
             entity = ''
             in_entity = False
@@ -119,7 +119,7 @@ def show(body):
 
 def parseEntity(e):
     remainder, e = e.split("&", 1)
-    #assert remainder == "&"
+    assert remainder == ""
     match e:
         case "gt":  print('>', end="")
         case "lt":  print('<', end="")

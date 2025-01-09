@@ -29,6 +29,9 @@ class URL:
             assert self.scheme == "data:text/html"
             self.content = url
         else:
+            if "view-source:" in url:
+                view, url = url.split(":", 1)
+                self.view_source = True
             self.scheme, url = url.split("://", 1)
             assert self.scheme in ["http", "https", "file"]
             if self.scheme == "http":
@@ -124,11 +127,18 @@ def parseEntity(e):
         case "gt":  print('>', end="")
         case "lt":  print('<', end="")
 
+def show_view(body):
+    for c in body:
+        print(c, end="")
 
 def load(url):
+    view = url.view_source
     body = url.request()
     print("showing content...")
-    show(body)        
+    if view: 
+        show_view(body)
+    else:        
+        show(body)        
 
 if __name__ == "__main__":
     import sys

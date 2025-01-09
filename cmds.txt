@@ -9,6 +9,8 @@ python3 browser.py https://browser.engineering/examples/example1-simple.html
 ./browser.py data:text/html,HELLO WORLD! HAHA -> este pasa 3 argumentos
 ./browser.py 'data:text/html,HELLO WORLD! HAHA' -> este pasa 1
 ./browser.py 'data:text/html,HELLO WORLD! HAHA &lt;div&gt;'
+./browser.py 'data:text/html,HELLO WORLD! HAHA &lt;div&gt;'
+./browser.py 'view-source:https://example.org/'
 
 g:; cd 'g:\browser-eng\python'; & 'c:\Python312\python.exe' 'c:\Users\Zanti&Anita\.vscode\extensions\ms-python.debugpy-2024.14.0-win32-x64\bundled\libs\debugpy\adapter/../..\debugpy\launcher' '61519' '--' 'G:\browser-eng\python\browser.py' 'data:text/html,HELLO WORLD! HAHA&lt;div&gt;'
 // This is a file to test!

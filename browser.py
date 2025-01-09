@@ -111,14 +111,19 @@ def show(body):
         elif in_entity and not c == ';':
             entity += c
         elif c == ";":
-            if entity == "&gt":
-                print('>', end="")
-            elif entity == "&lt":
-                print('<', end="")
+            parseEntity(entity)
             entity = ''
             in_entity = False
         elif not in_tag | in_entity:
             print(c, end="")
+
+def parseEntity(e):
+    remainder, e = e.split("&", 1)
+    #assert remainder == "&"
+    match e:
+        case "gt":  print('>', end="")
+        case "lt":  print('<', end="")
+
 
 def load(url):
     body = url.request()

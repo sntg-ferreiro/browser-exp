@@ -1,6 +1,42 @@
 #!/usr/bin/env python3.12.1
 import socket
 import ssl
+import tkinter
+
+WIDTH, HEIGHT = 800, 600
+HSTEP, VSTEP = 13, 18
+
+
+
+class Browser:
+    def __init__(self):
+        self.window = tkinter.Tk()
+        self.canvas = tkinter.Canvas(
+            self.window, 
+            width=WIDTH,
+            height=HEIGHT
+        )
+        self.canvas.pack()
+    
+    def load(self, url):
+        view = url.view_source
+        body = url.request()
+        print("showing content...")
+        text = ''
+        if view: 
+            text = lex_view(body)
+        else:        
+            text = lex(body) 
+        
+        
+        cursor_x, cursor_y = HSTEP, VSTEP
+        for c in text: 
+            self.canvas.create_text(cursor_x, cursor_y, text=c)
+            cursor_x += HSTEP
+            if cursor_x >= WIDTH - HSTEP:
+                cursor_y += VSTEP
+                cursor_x = HSTEP
+        
 
 def createRequest(host, path, method="GET", httpVersion="HTTP/1.1", userAgent="ZantySurfingBoard", connection="Closed"):
         request = "{} {} {}\r\n".format(method, path, httpVersion)
@@ -21,6 +57,7 @@ def makeFileFromUrlTLS(host, path, socket):
 
 class URL:
     def __init__(self, url=""):
+        self.view_source = False
         if not url:
             url = "file:///G:/browser-eng/python/cmds.txt"
             self.port = 80
@@ -99,7 +136,8 @@ class URL:
             case _:
                 print(f"Error on parsing schema")
         
-def show(body):
+def lex(body):
+    text = ''
     in_tag = False
     in_entity = False
     entity = ''
@@ -114,37 +152,35 @@ def show(body):
         elif in_entity and not c == ';':
             entity += c
         elif c == ";" and not entity == '':
-            parseEntity(entity)
+            text += parseEntity(entity)
             entity = ''
             in_entity = False
         elif not in_tag | in_entity:
-            print(c, end="")
+             text += c
+    return text
 
 def parseEntity(e):
     remainder, e = e.split("&", 1)
     assert remainder == ""
     match e:
-        case "gt":  print('>', end="")
-        case "lt":  print('<', end="")
+        case "gt":  return '>'
+        case "lt":  return '<'
 
-def show_view(body):
+def lex_view(body):
+    text = ''
     for c in body:
-        print(c, end="")
+        text += c
 
-def load(url):
-    view = url.view_source
-    body = url.request()
-    print("showing content...")
-    if view: 
-        show_view(body)
-    else:        
-        show(body)        
-
+       
 if __name__ == "__main__":
     import sys
     assert sys.version_info >= (3, 10)
     
+    
+    
     if len(sys.argv) == 1:
-        load(URL())
+        Browser().load(URL())
     else:
-        load(URL(sys.argv[1]))
+        Browser().load(URL(sys.argv[1]))
+    
+    tkinter.mainloop()

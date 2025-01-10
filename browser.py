@@ -2,23 +2,77 @@
 import socket
 import ssl
 import tkinter
-
-WIDTH, HEIGHT = 800, 600
-HSTEP, VSTEP = 13, 18
+LINE_BREAK = '\n'
 
 
+
+    
+def layout(text, HSTEP, VSTEP, WIDTH):
+    display_list = []
+    cursor_x, cursor_y = HSTEP, VSTEP
+    
+    for c in text: 
+        # Add to list the character and its position
+        
+        display_list.append((cursor_x, cursor_y, c))
+        if c == LINE_BREAK: 
+           cursor_y += VSTEP
+        cursor_x += HSTEP
+        if cursor_x >= WIDTH - HSTEP:
+            cursor_y += VSTEP
+            cursor_x = HSTEP
+    return display_list
 
 class Browser:
     def __init__(self):
+        self.WIDTH, self.HEIGHT = 800, 600
+        self.HSTEP, self.VSTEP = 13, 18
+        self.SCROLL_STEP = 100
+        
         self.window = tkinter.Tk()
         self.canvas = tkinter.Canvas(
             self.window, 
-            width=WIDTH,
-            height=HEIGHT
+            width=self.WIDTH,
+            height=self.HEIGHT
         )
-        self.canvas.pack()
+        self.canvas.pack(fill='both', expand=1)
+        self.scroll = 0
+        self.window.bind("<Down>", self.scrolldown)
+        self.window.bind("<Up>", self.scrollup)
+        self.window.bind("<MouseWheel>", self.scrollMouse)
+        self.window.bind("<Configure>", self.resize)
+    
+    def resize(self, e):
+        print(f"e: {e}")
+        self.WIDTH = e.width
+        self.HEIGHT = e.height
+        self.display_list = layout(self.og_text, self.HSTEP, self.VSTEP, e.width)
+        self.draw()
+        
+    def scrolldown(self, e):
+        self.scrolling(self.SCROLL_STEP)
+        
+    def scrollup(self, e):
+        self.scrolling(-1*self.SCROLL_STEP)
+        
+    def scrollMouse(self, e):
+        #windows me los da vuelta... 
+        self.scrolling(e.delta * -1)
+        
+    def scrolling(self, delta):
+        self.scroll += delta
+        if self.scroll < 0: self.scroll = 0
+        self.draw()
+    
+    def draw(self):
+        self.canvas.delete("all")
+        for x, y, c in self.display_list:
+            if y > self.scroll + self.HEIGHT: continue
+            if y + self.VSTEP < self.scroll: continue
+            self.canvas.create_text(x, y - self.scroll, text=c)
     
     def load(self, url):
+        self.og_url = url
         view = url.view_source
         body = url.request()
         print("showing content...")
@@ -27,16 +81,9 @@ class Browser:
             text = lex_view(body)
         else:        
             text = lex(body) 
-        
-        
-        cursor_x, cursor_y = HSTEP, VSTEP
-        for c in text: 
-            self.canvas.create_text(cursor_x, cursor_y, text=c)
-            cursor_x += HSTEP
-            if cursor_x >= WIDTH - HSTEP:
-                cursor_y += VSTEP
-                cursor_x = HSTEP
-        
+        self.og_text = text
+        self.display_list = layout(text, self.HSTEP, self.VSTEP, self.WIDTH)
+        self.draw()
 
 def createRequest(host, path, method="GET", httpVersion="HTTP/1.1", userAgent="ZantySurfingBoard", connection="Closed"):
         request = "{} {} {}\r\n".format(method, path, httpVersion)
@@ -175,8 +222,6 @@ def lex_view(body):
 if __name__ == "__main__":
     import sys
     assert sys.version_info >= (3, 10)
-    
-    
     
     if len(sys.argv) == 1:
         Browser().load(URL())
